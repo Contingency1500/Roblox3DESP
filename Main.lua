@@ -4,9 +4,6 @@ ORIGINAL AUTHOR
 Yes#0007 - 579306070040641546
 ]]--
 
-_G.PlayerLocation = game:GetService("Players");
-
-
 local VEC3 = Vector3.new
 local VEC2 = Vector2.new
 local COL3 = Color3.new
@@ -19,8 +16,14 @@ local Ray_new = Ray.new
 
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Camera = Workspace:FindFirstChildOfClass("Camera")
+
+_G.PlayerLocation = function()
+	return Players:GetChildren();
+end
+
 CreateDrawing = function(ClassName)
 	return function(Props)
 		local Create = Drawing_new(ClassName)
@@ -92,6 +95,16 @@ function tocam(pos)
     local PosChar, withinScreenBounds = Camera:WorldToViewportPoint(pos)
     return {VEC2(PosChar.X, PosChar.Y), withinScreenBounds}
 end
+function GetPropPC(inst, prop)
+	local result, ok = pcall(function()
+		return inst[prop]
+	end)
+	if not result then
+		return nil 
+	else 
+		return result 
+	end
+end
 function Cleanup()
 	for i,v in pairs(Drawings) do
 		v:Remove()
@@ -156,12 +169,13 @@ while true do
 	Cleanup()
 	
 	local func, ok = pcall(function()
-		for i,v in pairs(_G.PlayerLocation:GetChildren()) do
+		for i,v in pairs(_G.PlayerLocation()) do
 			if v.Name ~= LocalPlayer.Name then
-				local Char = v.Character or nil
-				if Char then
-					local Root = Char.HumanoidRootPart or nil
-					local Head = Char.Head or nil
+				local Char = v.Character or v or nil -- GetPropPC(v, "Character") or 
+				local TeamCheck = (v.Team ~= LocalPlayer.Team) or (v.TeamColor ~= LocalPlayer.TeamColor)
+				if Char and TeamCheck then
+					local Root = Char:FindFirstChild("HumanoidRootPart") or nil
+					local Head = Char:FindFirstChild("Head") or nil
 					
 					if Root and Head and tocam(Head.Position)[2] then
 						--[[ Vertex ]]--
