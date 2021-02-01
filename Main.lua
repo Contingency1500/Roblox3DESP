@@ -13,12 +13,17 @@ local INSTNEW = Instance.new
 local TBLINS = table.insert
 local Drawing_new = Drawing.new
 local Ray_new = Ray.new
+local TweenInfo_new = TweenInfo.new
 
-local LocalPlayer = game:GetService("Players").LocalPlayer
-local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local Camera = Workspace:FindFirstChildOfClass("Camera")
+
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
 
 _G.PlayerLocation = function()
 	return Players:GetChildren();
@@ -96,10 +101,10 @@ function tocam(pos)
     return {VEC2(PosChar.X, PosChar.Y), withinScreenBounds}
 end
 function GetPropPC(inst, prop)
-	local result, ok = pcall(function()
+	local func, result = pcall(function()
 		return inst[prop]
 	end)
-	if not result then
+	if not func then
 		return nil 
 	else 
 		return result 
@@ -165,83 +170,144 @@ function Create3DVertex(PART, SETT)
 	end
 end
 
-while true do
-	Cleanup()
-	
-	local func, ok = pcall(function()
-		for i,v in pairs(_G.PlayerLocation()) do
-			if v.Name ~= LocalPlayer.Name then
-				local Char = v.Character or v or nil -- GetPropPC(v, "Character") or 
-				local TeamCheck = (v.Team ~= LocalPlayer.Team) or (v.TeamColor ~= LocalPlayer.TeamColor)
-				if Char and TeamCheck then
-					local Root = Char:FindFirstChild("HumanoidRootPart") or nil
-					local Head = Char:FindFirstChild("Head") or nil
-					
-					if Root and Head and tocam(Head.Position)[2] then
-						--[[ Vertex ]]--
-						Create3DVertex(Root, {
-							["Offset"] = VEC3(2.25, 3, 3);
-							["Thickness"] = 1;
-							["Transparency"] = 1;
-							["Filled"] = false;
-							["Visible"] = true;
-							["Color"] = COL3(1,1,1);
-						}) 
-						
-						--[[ Health ]]--
-						Create3DVertex(Root, {
-							["Offset"] = VEC3(2.25, 3/100*Char.Humanoid.Health, 3);
-							["Thickness"] = 1;
-							["Transparency"] = 0.1;
-							["Filled"] = true;
-							["Visible"] = true;
-							["Color"] = COL3(0,1,0);
-						})
-						
-						--[[ Tracer ]]--
-						local ToCam = tocam(Head.Position)
-						if ToCam[2] then
-							local Mag = (LocalPlayer.Character.Head.Position - Head.Position).Magnitude
-							local NewLine = CreateDrawing("Line") {
-								["Visible"] = true;
-								["Transparency"] = 1;
-								["Thickness"] = 1;
-								["Color"] = RGB(255/Mag*255,255/255*Mag,0);
-								["From"] = VEC2(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y * 0.80);
-								["To"] = ToCam[1];
-							}
-							Drawings[#Drawings + 1] = NewLine
-						end
 
-						--[[ OverHead ]]--
+--[[ Initialize ESP ]]--
+spawn(function()
+	while true do
+		Cleanup()
+		
+		local func, ok = pcall(function()
+			for i,v in pairs(_G.PlayerLocation()) do
+				if v.Name ~= LocalPlayer.Name then
+					local Char = GetPropPC(v, "Character") or v or nil
+					local TeamCheck = (v.Team ~= LocalPlayer.Team) or (v.TeamColor ~= LocalPlayer.TeamColor) or (LocalPlayer.Team == nil)
+					if Char and TeamCheck then
+						local Root = Char:FindFirstChild("HumanoidRootPart") or nil
+						local Head = Char:FindFirstChild("Head") or nil
 						
-						--[[ IsVisible ]]--
-						local Color
-						if IsPartVisible(LocalPlayer.Character.Head, Head) then
-							Color = COL3(0,1,0);
-						else
-							Color = COL3(1,0,0);
+						if Root and Head and tocam(Head.Position)[2] then
+							--[[ Vertex ]]--
+							Create3DVertex(Root, {
+								["Offset"] = VEC3(2.25, 3, 3);
+								["Thickness"] = 1;
+								["Transparency"] = 1;
+								["Filled"] = false;
+								["Visible"] = true;
+								["Color"] = COL3(1,1,1);
+							}) 
+							
+							--[[ Health ]]--
+							Create3DVertex(Root, {
+								["Offset"] = VEC3(2.25, 3/100*Char.Humanoid.Health, 3);
+								["Thickness"] = 1;
+								["Transparency"] = 0.1;
+								["Filled"] = true;
+								["Visible"] = true;
+								["Color"] = COL3(0,1,0);
+							})
+							
+							--[[ Tracer ]]--
+							local ToCam = tocam(Head.Position)
+							if ToCam[2] then
+								local Mag = (LocalPlayer.Character.Head.Position - Head.Position).Magnitude
+								local NewLine = CreateDrawing("Line") {
+									["Visible"] = true;
+									["Transparency"] = 1;
+									["Thickness"] = 1;
+									["Color"] = RGB(255/Mag*255,255/255*Mag,0);
+									["From"] = VEC2(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y * 0.80);
+									["To"] = ToCam[1];
+								}
+								Drawings[#Drawings + 1] = NewLine
+							end
+	
+							--[[ OverHead ]]--
+							
+							--[[ IsVisible ]]--
+							local Color
+							if IsPartVisible(LocalPlayer.Character.Head, Head) then
+								Color = COL3(0,1,0);
+							else
+								Color = COL3(1,0,0);
+							end
+							local PosPart = INSTNEW("Part")
+							PosPart.CFrame = Head.CFrame
+							PosPart.Size = VEC3(1,1,1)
+							PosPart.Transparency = 1
+							Create3DVertex(PosPart, {
+								["Offset"] = VEC3(1,1,1);
+								["Thickness"] = 1;
+								["Transparency"] = 1;
+								["Filled"] = false;
+								["Visible"] = true;
+								["Color"] = Color;
+							})
+							PosPart:Destroy()
 						end
-						local PosPart = INSTNEW("Part")
-						PosPart.CFrame = Head.CFrame
-						PosPart.Size = VEC3(1,1,1)
-						PosPart.Transparency = 1
-						Create3DVertex(PosPart, {
-							["Offset"] = VEC3(1,1,1);
-							["Thickness"] = 1;
-							["Transparency"] = 1;
-							["Filled"] = false;
-							["Visible"] = true;
-							["Color"] = Color;
-						})
-						PosPart:Destroy()
 					end
 				end
 			end
-		end
-		return true
-	end)
-	if not func then warn(ok) end
+			return true
+		end)
+		if not func then warn(ok) end
+	
+		RunService.RenderStepped:Wait()
+	end
+end)
 
-	RunService.RenderStepped:Wait()
-end
+--[[ Aimbot ]]--
+local MouseDown = false
+Mouse.Button2Down:Connect(function()
+	MouseDown = true
+end)
+Mouse.Button2Up:Connect(function()
+	MouseDown = false
+end)
+
+spawn(function()
+	while true do
+		if MouseDown then
+			local func, result = pcall(function()
+				local AimPlayers = _G.PlayerLocation()
+				local ClosestPlayer = {
+					["Instance"] = {};
+					["Dist"] = 9e99;
+					["PhysicalDist"] = 9e99;
+				}
+				
+				for i,v in pairs(AimPlayers) do
+					if v.Name ~= LocalPlayer.Name then
+						local Char = GetPropPC(v, "Character") or v or nil
+						local TeamCheck = (v.Team ~= LocalPlayer.Team) or (v.TeamColor ~= LocalPlayer.TeamColor) or (LocalPlayer.Team == nil)
+						if Char and TeamCheck then
+							local Root = Char:FindFirstChild("HumanoidRootPart") or nil
+							local Hum = Char:FindFirstChild("Humanoid") or nil
+							local Head = Char:FindFirstChild("Head") or nil
+							
+							if Root and Head and Hum and tocam(Head.Position)[2] then
+								if Hum.Health > 0 then
+									local LocalMouse = Mouse.Hit.p
+									local HeadPos = Head.Position
+		
+									local MouseMag = (tocam(LocalMouse)[1] - tocam(HeadPos)[1]).Magnitude
+									--local PhysicalMag = (LocalPlayer.Character.HumanoidRootPart.Position - HeadPos).Magnitude
+									if MouseMag <= ClosestPlayer.Dist then -- and PhysicalMag <= ClosestPlayer.PhysicalDist
+										ClosestPlayer.Dist = MouseMag
+										--ClosestPlayer.PhysicalDist = PhysicalMag
+										ClosestPlayer.Instance = Char
+									end 
+								end
+							end
+						end
+					end
+				end
+				local LookAt = CFNEW(LocalPlayer.Character.Head.Position, ClosestPlayer.Instance.Head.Position + ClosestPlayer.Instance.Head.CFrame.lookVector)
+				TweenService:Create(Camera, TweenInfo_new(0.05), {
+					["CFrame"] = LookAt
+				}):Play()
+			end)
+			if not func then warn(result) end
+		end
+		RunService.RenderStepped:Wait()
+	end
+end)
