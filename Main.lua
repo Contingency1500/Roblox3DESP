@@ -47,10 +47,10 @@ function IsPartVisible(Part1, Part2)
     CheckPart.Anchored = true
     CheckPart.CanCollide = false
     CheckPart.Transparency = 1
-    CheckPart.Size = VEC3(2.5, 2.5, 2.5)
+    CheckPart.Size = VEC3(1.5, 1.5, 1.5) * Part2.Size
     CheckPart.CFrame = Part2.CFrame
     
-    local Ray = Ray_new(Part1.Position, (Part2.Position - Part1.Position).unit * 9999)
+    local Ray = Ray_new(Part1.Position, (Part2.Position - Part1.Position).Unit * 9999)
     local part,position = workspace:FindPartOnRay(Ray, Part1.Parent)
 	if part then
 	    if part.Name == CheckPart.Name then
@@ -224,11 +224,13 @@ spawn(function()
 							--[[ OverHead ]]--
 							
 							--[[ IsVisible ]]--
-							local Color
-							if IsPartVisible(LocalPlayer.Character.Head, Head) then
-								Color = COL3(0,1,0);
-							else
-								Color = COL3(1,0,0);
+							local Color = COL3(1,0,0);
+							for i,v in pairs(Char:GetChildren()) do
+								if v:IsA("BasePart") then
+									if IsPartVisible(LocalPlayer.Character.Head, v) then
+										Color = COL3(0,1,0);
+									end
+								end
 							end
 							local PosPart = INSTNEW("Part")
 							PosPart.CFrame = Head.CFrame
@@ -250,7 +252,7 @@ spawn(function()
 			return true
 		end)
 		if not func then warn(ok) end
-	
+		
 		RunService.RenderStepped:Wait()
 	end
 end)
@@ -288,12 +290,22 @@ spawn(function()
 								if Hum.Health > 0 then
 									local LocalMouse = Mouse.Hit.p
 									local HeadPos = Head.Position
-		
+									
+									local IsVisible = false
 									local MouseMag = (tocam(LocalMouse)[1] - tocam(HeadPos)[1]).Magnitude
-									--local PhysicalMag = (LocalPlayer.Character.HumanoidRootPart.Position - HeadPos).Magnitude
-									if MouseMag <= ClosestPlayer.Dist then -- and PhysicalMag <= ClosestPlayer.PhysicalDist
+									local PhysicalMag = (LocalPlayer.Character.HumanoidRootPart.Position - HeadPos).Magnitude
+
+									for i,v in pairs(Char:GetChildren()) do
+										if v:IsA("BasePart") then
+											if IsPartVisible(LocalPlayer.Character.Head, v) then
+												IsVisible = true
+											end
+										end
+									end
+
+									if MouseMag <= ClosestPlayer.Dist and PhysicalMag <= ClosestPlayer.PhysicalDist and IsVisible then
 										ClosestPlayer.Dist = MouseMag
-										--ClosestPlayer.PhysicalDist = PhysicalMag
+										ClosestPlayer.PhysicalDist = PhysicalMag
 										ClosestPlayer.Instance = Char
 									end 
 								end
@@ -301,7 +313,7 @@ spawn(function()
 						end
 					end
 				end
-				local LookAt = CFNEW(LocalPlayer.Character.Head.Position, ClosestPlayer.Instance.Head.Position + ClosestPlayer.Instance.Head.CFrame.lookVector)
+				local LookAt = CFNEW(Camera.CFrame.p, ClosestPlayer.Instance.Head.Position + ClosestPlayer.Instance.Head.CFrame.lookVector)
 				TweenService:Create(Camera, TweenInfo_new(0.05), {
 					["CFrame"] = LookAt
 				}):Play()
