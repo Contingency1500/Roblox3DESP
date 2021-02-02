@@ -36,7 +36,7 @@ _G.PlayerLocation = function()
 	end
 	return Humanoids;
 	]]--
-	return Workspace.Level.Actors:GetChildren();
+	return Players:GetChildren();
 end
 
 CreateDrawing = function(ClassName)
