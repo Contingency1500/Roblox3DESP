@@ -26,7 +26,17 @@ local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
 _G.PlayerLocation = function()
-	return Players:GetChildren();
+	--[[
+	-- GLOBAL ESP
+	local Humanoids = {}
+	for i,v in pairs(Workspace:GetDescendants()) do
+		if v:IsA("Humanoid") or v.Name == "Humanoid" then
+			TBLINS(Humanoids, v.Parent)
+		end
+	end
+	return Humanoids;
+	]]--
+	return Workspace.Level.Actors:GetChildren();
 end
 
 CreateDrawing = function(ClassName)
@@ -180,7 +190,7 @@ spawn(function()
 			for i,v in pairs(_G.PlayerLocation()) do
 				if v.Name ~= LocalPlayer.Name then
 					local Char = GetPropPC(v, "Character") or v or nil
-					local TeamCheck = (v.Team ~= LocalPlayer.Team) or (v.TeamColor ~= LocalPlayer.TeamColor) or (LocalPlayer.Team == nil)
+					local TeamCheck = (GetPropPC(v, "Team") ~= LocalPlayer.Team) or (GetPropPC(v, "TeamColor") ~= LocalPlayer.TeamColor) or (LocalPlayer.Team == nil)
 					if Char and TeamCheck then
 						local Root = Char:FindFirstChild("HumanoidRootPart") or nil
 						local Head = Char:FindFirstChild("Head") or nil
@@ -280,7 +290,7 @@ spawn(function()
 				for i,v in pairs(AimPlayers) do
 					if v.Name ~= LocalPlayer.Name then
 						local Char = GetPropPC(v, "Character") or v or nil
-						local TeamCheck = (v.Team ~= LocalPlayer.Team) or (v.TeamColor ~= LocalPlayer.TeamColor) or (LocalPlayer.Team == nil)
+						local TeamCheck = (GetPropPC(v, "Team") ~= LocalPlayer.Team) or (GetPropPC(v, "TeamColor") ~= LocalPlayer.TeamColor) or (LocalPlayer.Team == nil)
 						if Char and TeamCheck then
 							local Root = Char:FindFirstChild("HumanoidRootPart") or nil
 							local Hum = Char:FindFirstChild("Humanoid") or nil
@@ -304,7 +314,7 @@ spawn(function()
 									end
 
 									if MouseMag <= ClosestPlayer.Dist and PhysicalMag <= ClosestPlayer.PhysicalDist and IsVisible then
-										ClosestPlayer.Dist = MouseMag
+										--ClosestPlayer.Dist = MouseMag
 										ClosestPlayer.PhysicalDist = PhysicalMag
 										ClosestPlayer.Instance = Char
 									end 
@@ -313,8 +323,8 @@ spawn(function()
 						end
 					end
 				end
-				local LookAt = CFNEW(Camera.CFrame.p, ClosestPlayer.Instance.Head.Position + ClosestPlayer.Instance.Head.CFrame.lookVector)
-				TweenService:Create(Camera, TweenInfo_new(0.05), {
+				local LookAt = CFNEW(Camera.CFrame.p, ClosestPlayer.Instance.Head.Position + (ClosestPlayer.Instance.Head.CFrame.lookVector * 0.25))
+				TweenService:Create(Camera, TweenInfo_new(0.1), {
 					["CFrame"] = LookAt
 				}):Play()
 			end)
